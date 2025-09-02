@@ -13,3 +13,16 @@ haproxy_listen_port: 443
 
 # Mode haproxy: "tcp" pour SSL passthrough, ou "http" si tu veux terminer TLS sur haproxy
 haproxy_mode: "tcp"
+
+
+
+
+
+#exemple
+
+backend_hosts:
+  - jfrog1.mondomaine.local
+  - jfrog2.mondomaine.local
+backend_port: 443
+haproxy_listen_port: 443
+haproxy_mode: "tcp"
