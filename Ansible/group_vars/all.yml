@@ -1,5 +1,15 @@
 ---
-# Port backend pour NGINX
-backend_port: 8080
-# Port public d'HAProxy
-haproxy_listen_port: 80
+# Port utilisé par JFrog (443 par défaut)
+backend_port: 443
+
+# Liste des backends JFrog (IPs ou hostnames). Exemple :
+# backend_hosts:
+#   - jfrog1.example.com
+#   - jfrog2.example.com
+backend_hosts: []
+
+# Port public écouté par HAProxy sur la VM lb
+haproxy_listen_port: 443
+
+# Mode haproxy: "tcp" pour SSL passthrough, ou "http" si tu veux terminer TLS sur haproxy
+haproxy_mode: "tcp"
