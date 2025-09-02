@@ -1,63 +1,30 @@
 ---
-- name: Configure backends (NGINX)
-  hosts: apps
-  become: true
-  tasks:
-    - name: Ensure packages are present
-      apt:
-        name:
-          - nginx
-        state: present
-        update_cache: true
-
-    - name: Configure NGINX to listen on {{ backend_port }}
-      copy:
-        dest: /etc/nginx/sites-available/default
-        content: |
-          server {
-            listen {{ backend_port }} default_server;
-            listen [::]:{{ backend_port }} default_server;
-            server_name _;
-            location / {
-              return 200 "Hello from \n$hostname\n";
-            }
-          }
-      notify: Restart nginx
-
-    - name: Ensure nginx is enabled and started
-      service:
-        name: nginx
-        state: started
-        enabled: true
-
-  handlers:
-    - name: Restart nginx
-      service:
-        name: nginx
-        state: restarted
-
-- name: Configure HAProxy on lb
+- name: Configure HAProxy pour JFrog
   hosts: lb
   become: true
   vars:
-    backend_nodes: |
-      {% for h in groups['apps'] %}
-      server {{ h }} {{ hostvars[h]['private_ip'] }}:{{ backend_port }} check
-      {% endfor %}
+    # backend_hosts sera lu depuis group_vars/all.yml
   tasks:
+    - name: Ensure apt cache is up to date
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+
     - name: Install haproxy
       apt:
         name: haproxy
         state: present
-        update_cache: true
 
     - name: Deploy haproxy.cfg
       template:
         src: roles/haproxy/templates/haproxy.cfg.j2
         dest: /etc/haproxy/haproxy.cfg
+        owner: root
+        group: root
+        mode: '0644'
       notify: Restart haproxy
 
-    - name: Ensure haproxy is enabled and started
+    - name: Ensure haproxy enabled and started
       service:
         name: haproxy
         state: started
