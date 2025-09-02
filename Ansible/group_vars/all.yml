@@ -1,0 +1,5 @@
+---
+# Port backend pour NGINX
+backend_port: 8080
+# Port public d'HAProxy
+haproxy_listen_port: 80
