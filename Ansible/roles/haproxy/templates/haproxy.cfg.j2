@@ -2,19 +2,42 @@ global
     log /dev/log    local0
     log /dev/log    local1 notice
     daemon
+    maxconn 4096
 
 defaults
     log     global
-    mode    http
-    option  httplog
+    mode    {{ haproxy_mode }}
     option  dontlognull
     timeout connect 5s
     timeout client  50s
     timeout server  50s
 
-frontend http-in
+{% if haproxy_mode == "tcp" %}
+frontend jfrog_frontend
     bind *:{{ haproxy_listen_port }}
-    default_backend app-backend
+    mode tcp
+    default_backend jfrog_backends
 
-backend app-backend
-{{ backend_nodes | indent(4) }}
+backend jfrog_backends
+    mode tcp
+{% for host in backend_hosts %}
+    # backend {{ loop.index }} -> {{ host }}:{{ backend_port }}
+    server jfrog{{ loop.index }} {{ host }}:{{ backend_port }} check
+{% endfor %}
+
+{% else %}
+# HTTP mode (terminates TLS) - requires certs & acl modifications
+# This will assume backends accept HTTPS on {{ backend_port }}.
+frontend http_frontend
+    bind *:{{ haproxy_listen_port }}
+    mode http
+    option httplog
+    default_backend jfrog_backends_http
+
+backend jfrog_backends_http
+    mode http
+    option forwardfor
+{% for host in backend_hosts %}
+    server jfrog{{ loop.index }} {{ host }}:{{ backend_port }} check ssl verify none
+{% endfor %}
+{% endif %} | indent(4) }}
